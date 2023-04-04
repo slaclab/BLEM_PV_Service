@@ -1,0 +1,45 @@
+# BLEM PV Service
+
+The BLEM PV Service populates and updates multiple PVs containing the BLEM R-Matrix and Twiss models. This service is run for multiple beampaths and types of models.  
+
+
+## Directory Structure
+.  
+|-- README  
+|-- RELEASE_NOTES  
+|-- blem_pv.sh  
+`-- blem_pv.py  
+
+
+### blem_pv.sh  
+  - Sources the correct version of python  
+    - The Matlab Engine for 2020a can only be run from Python3.7  
+  - Runs a python script for each PV to update periodically  
+  - There is a separate PV/python instance for each beampath and model type  
+  - Beam Paths:  
+    - CU_HXR  
+    - CU_SXR  
+    - SC_HXR  
+    - SC_SXR  
+    - SC_DIAG0  
+    - SC_BSYD  
+  - Model Types:  
+    - LIVE  
+    - DESIGN  
+
+
+### blem_pv.py  
+  - Parse Arguments  
+  - Establish connection with PVA  
+  - Create Matlab engine  
+  - Create a dictionary of all element and device names  
+  - Run a loop until terminated that will:  
+    - Get the PV data from Matlab  
+    - Write the data to the associated RMAT & TWISS PVs with PVA  
+    - Write the timestamp to the associated RMAT_TOD & TWISS_TOD PVs with CA  
+    - Sleep for at most 1 second (skipped if the function takes >1s to process)  
+
+
+### Authors
+
+Zach Domke      zdomke@slac.stanford.edu  

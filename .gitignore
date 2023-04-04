@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+*.log
+
+# Local files to ignore
+use_python3_7.sh
+tools/
+hstb_pvs/
