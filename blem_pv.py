@@ -29,6 +29,29 @@ TWISS_KEYS = {'p0c': 0,
               'etap_y': 10}
 
 
+def update_pv_value(pv, n, devices, z_pos, l_eff, r_mat=None, twiss=None):
+    if r_mat is None and twiss is None:
+        raise ValueError("")
+    elif r_mat is not None and twiss is not None:
+        raise ValueError("")
+
+    pv['value']['element'] = n
+    pv['value']['device_name'] = devices
+    pv['value']['s'] = z_pos[0]
+    pv['value']['z'] = z_pos[0]
+    pv['value']['length'] = l_eff[0]
+
+    if r_mat is not None:
+        for i in range(6):
+            for j in range(6):
+                key = 'r' + str(i + 1) + str(j + 1)
+                pv['value'][key] = r_mat[i][j]
+
+    if twiss is not None:
+        for key, ind in TWISS_KEYS.items():
+            pv['value'][key] = twiss[ind]
+
+
 def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
     logger.info(f"{b_path}:{p_type}\tStart")
 
@@ -44,25 +67,23 @@ def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
 
     devices = [element_devices_dict.get(ele, ele) for ele in n]
 
-    r_mat_pv = pva.get(f"BLEM:SYS0:1:{b_path}:{p_type}:RMAT")
-    r_mat_pv['value']['element'] = n
-    r_mat_pv['value']['device_name'] = devices
-    r_mat_pv['value']['s'] = z_pos[0]
-    r_mat_pv['value']['z'] = z_pos[0]
-    r_mat_pv['value']['length'] = l_eff[0]
-    for i in range(6):
-        for j in range(6):
-            key = 'r' + str(i + 1) + str(j + 1)
-            r_mat_pv['value'][key] = r_mat[i][j]
+    type_error = False
+    try:
+        r_mat_pv = pva.get(f"BLEM:SYS0:1:{b_path}:{p_type}:RMAT")
+        update_pv_value(r_mat_pv, n, devices, z_pos, l_eff, r_mat=r_mat)
+    except TypeError as e:
+        logger.error(f"{b_path}:{p_type}:RMAT\t{e.args[0]}")
+        type_error = True
 
-    twiss_pv = pva.get(f"BLEM:SYS0:1:{b_path}:{p_type}:TWISS")
-    twiss_pv['value']['element'] = n
-    twiss_pv['value']['device_name'] = devices
-    twiss_pv['value']['s'] = z_pos[0]
-    twiss_pv['value']['z'] = z_pos[0]
-    twiss_pv['value']['length'] = l_eff[0]
-    for key, ind in TWISS_KEYS.items():
-        twiss_pv['value'][key] = twiss[ind]
+    try:
+        twiss_pv = pva.get(f"BLEM:SYS0:1:{b_path}:{p_type}:TWISS")
+        update_pv_value(twiss_pv, n, devices, z_pos, l_eff, twiss=twiss)
+    except TypeError as e:
+        logger.error(f"{b_path}:{p_type}:TWISS\t{e.args[0]}")
+        type_error = True
+
+    if type_error:
+        return
 
     pva.put(f"BLEM:SYS0:1:{b_path}:{p_type}:RMAT", r_mat_pv)
     pva.put(f"BLEM:SYS0:1:{b_path}:{p_type}:TWISS", twiss_pv)
@@ -105,10 +126,7 @@ def main():
     try:
         while True:
             start_time = time()
-
-            if args.p_type in ["LIVE", "DESIGN"]:
-                periodic_pvs(pva, m_eng, element_devices_dict, args.b_path, args.p_type)
-
+            periodic_pvs(pva, m_eng, element_devices_dict, args.b_path, args.p_type)
             elapsed_time = time() - start_time
 
             if elapsed_time < 1:

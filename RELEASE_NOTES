@@ -1,3 +1,6 @@
+R1.0.1  Zach Domke  04/07/2023
+        Catch errors when an unexpected type is returned from Matlab's model_rMatGet()
+        Create update_pv_value() function to reduce duplicate code
 R1.0.0  Zach Domke  04/04/2023
         Initial release
         Includes blem_pv.py & blem_pv.sh
