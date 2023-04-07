@@ -1,10 +1,10 @@
 from time import time, sleep
-from logging import getLogger, StreamHandler, Formatter
+from logging import (getLogger, StreamHandler, Formatter)
 from argparse import ArgumentParser
 from datetime import datetime
 from epics import caput
 from p4p.client.thread import Context
-from matlab.engine import start_matlab
+from matlab.engine import (start_matlab, InterruptedError)
 
 
 logger = getLogger()
@@ -31,9 +31,9 @@ TWISS_KEYS = {'p0c': 0,
 
 def update_pv_value(pv, n, devices, z_pos, l_eff, r_mat=None, twiss=None):
     if r_mat is None and twiss is None:
-        raise ValueError("")
+        raise ValueError("Provide one of the following r_mat or twiss")
     elif r_mat is not None and twiss is not None:
-        raise ValueError("")
+        raise ValueError("Provide either r_mat or twiss, but not both")
 
     pv['value']['element'] = n
     pv['value']['device_name'] = devices
@@ -131,7 +131,7 @@ def main():
 
             if elapsed_time < 1:
                 sleep(1 - elapsed_time)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, InterruptedError):
         logger.info("Closing connections")
     finally:
         pva.close()

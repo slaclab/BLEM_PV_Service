@@ -7,20 +7,27 @@ source $PACKAGE_TOP/anaconda/envs/python3.7env/bin/activate
 export PYTHONPATH=$TOOLS/python/toolbox
 export LD_LIBRARY_PATH=/usr/local/lcls/package/anaconda/envs/python3.7env/epics/lib/linux-x86_64:$LD_LIBRARY_PATH
 
-# Update LIVE PVs
-python blem_pv.py CU_HXR LIVE &
-python blem_pv.py CU_SXR LIVE &
-python blem_pv.py SC_HXR LIVE &
-python blem_pv.py SC_SXR LIVE &
-python blem_pv.py SC_DIAG0 LIVE &
-python blem_pv.py SC_BSYD LIVE &
 
-# Update DESIGN PVs
-python blem_pv.py CU_HXR DESIGN &
-python blem_pv.py CU_SXR DESIGN &
-python blem_pv.py SC_HXR DESIGN &
-python blem_pv.py SC_SXR DESIGN &
-python blem_pv.py SC_DIAG0 DESIGN &
-python blem_pv.py SC_BSYD DESIGN &
+# Send a kill signal to each python process started by this script
+close(){
+    for pid in "${pids[@]}"; do
+        if ps -p $pid > /dev/null; then
+            kill $pid
+        fi
+    done
+}
+trap close SIGINT SIGTERM
 
-exit 0
+
+# Run each script in the background and store their process IDs
+b_paths=("CU_HXR" "CU_SXR" "SC_HXR" "SC_SXR" "SC_DIAG0" "SC_BSYD")
+p_types=("LIVE" "DESIGN")
+pids=()
+for arg1 in "${b_paths[@]}"; do
+    for arg2 in "${p_types[@]}"; do
+        python blem_pv.py $arg1 $arg2 & 
+        pids+=($!)
+    done
+done
+
+wait
