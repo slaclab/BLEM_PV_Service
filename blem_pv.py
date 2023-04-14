@@ -67,30 +67,25 @@ def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
 
     devices = [element_devices_dict.get(ele, ele) for ele in n]
 
-    type_error = False
     try:
         r_mat_pv = pva.get(f"BLEM:SYS0:1:{b_path}:{p_type}:RMAT")
         update_pv_value(r_mat_pv, n, devices, z_pos, l_eff, r_mat=r_mat)
+
+        proc_time = datetime.now().isoformat(sep=' ', timespec="seconds")
+        pva.put(f"BLEM:SYS0:1:{b_path}:{p_type}:RMAT", r_mat_pv)
+        caput(f"BLEM:SYS0:1:{b_path}:{p_type}:RMAT_TOD", proc_time)
     except TypeError as e:
         logger.error(f"{b_path}:{p_type}:RMAT\t{e.args[0]}")
-        type_error = True
 
     try:
         twiss_pv = pva.get(f"BLEM:SYS0:1:{b_path}:{p_type}:TWISS")
         update_pv_value(twiss_pv, n, devices, z_pos, l_eff, twiss=twiss)
+
+        proc_time = datetime.now().isoformat(sep=' ', timespec="seconds")
+        pva.put(f"BLEM:SYS0:1:{b_path}:{p_type}:TWISS", twiss_pv)
+        caput(f"BLEM:SYS0:1:{b_path}:{p_type}:TWISS_TOD", proc_time)
     except TypeError as e:
         logger.error(f"{b_path}:{p_type}:TWISS\t{e.args[0]}")
-        type_error = True
-
-    if type_error:
-        return
-
-    pva.put(f"BLEM:SYS0:1:{b_path}:{p_type}:RMAT", r_mat_pv)
-    pva.put(f"BLEM:SYS0:1:{b_path}:{p_type}:TWISS", twiss_pv)
-
-    proc_time = datetime.now().isoformat(sep=' ', timespec="seconds")
-    caput(f"BLEM:SYS0:1:{b_path}:{p_type}:RMAT_TOD", proc_time)
-    caput(f"BLEM:SYS0:1:{b_path}:{p_type}:TWISS_TOD", proc_time)
 
     logger.info(f"{b_path}:{p_type}\tEnd")
 
