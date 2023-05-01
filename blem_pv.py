@@ -20,6 +20,7 @@ handler.setLevel("WARNING")
 # Ordered list of dict keys used by TWISS NTTable
 TWISS_KEYS = ['p0c', 'psi_x', 'beta_x', 'alpha_x', 'eta_x', 'etap_x',
               'psi_y', 'beta_y', 'alpha_y', 'eta_y', 'etap_y']
+PV_PREFIX = None
 
 
 def update_pv_value(pv, n, devices, z_pos, l_eff, r_mat=None, twiss=None):
@@ -73,9 +74,8 @@ def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
     """
     logger.info(f"{b_path}:{p_type}\tStart")
 
-    get_type = "EXTANT" if p_type == "LIVE" else "DESIGN"
-
     # Run the MATLAB function model_rMatGet() (the energy variable is unused)
+    get_type = "EXTANT" if p_type == "LIVE" else "DESIGN"
     r_mat, z_pos, l_eff, twiss, _, n = m_eng.model_rMatGet(
         b_path,
         [],
@@ -87,23 +87,23 @@ def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
 
     # Save RMAT data; TypeError thrown if data includes complex numbers
     try:
-        r_mat_pv = pva.get(f"BLEM:SYS0:1:{b_path}:{p_type}:RMAT")
+        r_mat_pv = pva.get(f"{PV_PREFIX}:RMAT")
         update_pv_value(r_mat_pv, n, devices, z_pos, l_eff, r_mat=r_mat)
 
         proc_time = datetime.now().isoformat(sep=' ', timespec="seconds")
-        pva.put(f"BLEM:SYS0:1:{b_path}:{p_type}:RMAT", r_mat_pv)
-        caput(f"BLEM:SYS0:1:{b_path}:{p_type}:RMAT_TOD", proc_time)
+        pva.put(f"{PV_PREFIX}:RMAT", r_mat_pv)
+        caput(f"{PV_PREFIX}:RMAT_TOD", proc_time)
     except TypeError as e:
         logger.error(f"{b_path}:{p_type}:RMAT\t{e.args[0]}")
 
     # Save TWISS data; TypeError thrown if data includes complex numbers
     try:
-        twiss_pv = pva.get(f"BLEM:SYS0:1:{b_path}:{p_type}:TWISS")
+        twiss_pv = pva.get(f"{PV_PREFIX}:TWISS")
         update_pv_value(twiss_pv, n, devices, z_pos, l_eff, twiss=twiss)
 
         proc_time = datetime.now().isoformat(sep=' ', timespec="seconds")
-        pva.put(f"BLEM:SYS0:1:{b_path}:{p_type}:TWISS", twiss_pv)
-        caput(f"BLEM:SYS0:1:{b_path}:{p_type}:TWISS_TOD", proc_time)
+        pva.put(f"{PV_PREFIX}:TWISS", twiss_pv)
+        caput(f"{PV_PREFIX}:TWISS_TOD", proc_time)
     except TypeError as e:
         logger.error(f"{b_path}:{p_type}:TWISS\t{e.args[0]}")
 
@@ -141,6 +141,9 @@ def main():
     parser.add_argument("b_path", metavar="Beam Path")
     parser.add_argument("p_type", choices=['LIVE', 'DESIGN'])
     args = parser.parse_args()
+
+    global PV_PREFIX
+    PV_PREFIX = f"BLEM:SYS0:1:{args.b_path}:{args.p_type}"
 
     # Open a PVAccess connection with p4p
     pva = Context('pva', nt=False)
