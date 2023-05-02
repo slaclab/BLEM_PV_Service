@@ -2,7 +2,7 @@ from time import time, sleep
 from logging import (getLogger, StreamHandler, Formatter)
 from argparse import ArgumentParser
 from datetime import datetime
-from epics import caput
+from epics import (caget, caput)
 from p4p.client.thread import Context
 from matlab.engine import (start_matlab, InterruptedError)
 
@@ -21,6 +21,23 @@ handler.setLevel("WARNING")
 TWISS_KEYS = ['p0c', 'psi_x', 'beta_x', 'alpha_x', 'eta_x', 'etap_x',
               'psi_y', 'beta_y', 'alpha_y', 'eta_y', 'etap_y']
 PV_PREFIX = None
+
+
+def write_status(msg, level=0):
+    """Write a message to stdout with the logger and write it to a
+    status PV.
+
+    Args:
+        msg (str): The status message to write.
+        level (int): Determines the logging level.
+    """
+    if level == 0:
+        logger.info(msg)
+    elif level == 1:
+        logger.warning(msg)
+    elif level == 2:
+        logger.error(msg)
+    caput(f"{PV_PREFIX}:STATUS", msg)
 
 
 def update_pv_value(pv, n, devices, z_pos, l_eff, r_mat=None, twiss=None):
@@ -72,7 +89,7 @@ def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         b_path (str): The Beam Path of the requested data.
         p_type (str): The Model Type of the requested data.
     """
-    logger.info(f"{b_path}:{p_type}\tStart")
+    write_status(f"{b_path}:{p_type}\tStart")
 
     # Run the MATLAB function model_rMatGet() (the energy variable is unused)
     get_type = "EXTANT" if p_type == "LIVE" else "DESIGN"
@@ -93,8 +110,11 @@ def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         proc_time = datetime.now().isoformat(sep=' ', timespec="seconds")
         pva.put(f"{PV_PREFIX}:RMAT", r_mat_pv)
         caput(f"{PV_PREFIX}:RMAT_TOD", proc_time)
+
+        counter = caget(f"{PV_PREFIX}:RMAT_COUNT")
+        caput(f"{PV_PREFIX}:RMAT_COUNT", counter + 1)
     except TypeError as e:
-        logger.error(f"{b_path}:{p_type}:RMAT\t{e.args[0]}")
+        write_status(f"{b_path}:{p_type}:RMAT\t{e.args[0]}", 2)
 
     # Save TWISS data; TypeError thrown if data includes complex numbers
     try:
@@ -104,10 +124,13 @@ def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         proc_time = datetime.now().isoformat(sep=' ', timespec="seconds")
         pva.put(f"{PV_PREFIX}:TWISS", twiss_pv)
         caput(f"{PV_PREFIX}:TWISS_TOD", proc_time)
-    except TypeError as e:
-        logger.error(f"{b_path}:{p_type}:TWISS\t{e.args[0]}")
 
-    logger.info(f"{b_path}:{p_type}\tEnd")
+        counter = caget(f"{PV_PREFIX}:TWISS_COUNT")
+        caput(f"{PV_PREFIX}:TWISS_COUNT", counter + 1)
+    except TypeError as e:
+        write_status(f"{b_path}:{p_type}:TWISS\t{e.args[0]}", 2)
+
+    write_status(f"{b_path}:{p_type}\tEnd")
 
 
 def get_element_dict(m_eng):
@@ -145,6 +168,8 @@ def main():
     global PV_PREFIX
     PV_PREFIX = f"BLEM:SYS0:1:{args.b_path}:{args.p_type}"
 
+    write_status("Starting-up")
+
     # Open a PVAccess connection with p4p
     pva = Context('pva', nt=False)
 
@@ -167,6 +192,7 @@ def main():
         logger.info("Closing connections")
     finally:
         pva.close()
+        write_status("Closing-down")
 
 
 if __name__ == "__main__":
