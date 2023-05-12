@@ -1,3 +1,5 @@
+R1.0.3  Zach Domke  05/12/2023
+        Write status & processing counter to associated PVs
 R1.0.2  Zach Domke  04/07/2023
         When running blem_pv.sh, Ctrl-C will close all python scripts
 R1.0.1  Zach Domke  04/07/2023

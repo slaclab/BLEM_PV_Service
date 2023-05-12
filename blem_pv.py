@@ -31,13 +31,13 @@ def write_status(msg, level=0):
         msg (str): The status message to write.
         level (int): Determines the logging level.
     """
-    if level == 0:
+    if level < 2:
         logger.info(msg)
-    elif level == 1:
-        logger.warning(msg)
     elif level == 2:
         logger.error(msg)
-    caput(f"{PV_PREFIX}:STATUS", msg)
+
+    if level > 0:
+        caput(f"{PV_PREFIX}:STAT", msg)
 
 
 def update_pv_value(pv, n, devices, z_pos, l_eff, r_mat=None, twiss=None):
@@ -89,7 +89,7 @@ def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         b_path (str): The Beam Path of the requested data.
         p_type (str): The Model Type of the requested data.
     """
-    write_status(f"{b_path}:{p_type}\tStart")
+    write_status("Start data processing")
 
     # Run the MATLAB function model_rMatGet() (the energy variable is unused)
     get_type = "EXTANT" if p_type == "LIVE" else "DESIGN"
@@ -111,10 +111,10 @@ def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         pva.put(f"{PV_PREFIX}:RMAT", r_mat_pv)
         caput(f"{PV_PREFIX}:RMAT_TOD", proc_time)
 
-        counter = caget(f"{PV_PREFIX}:RMAT_COUNT")
-        caput(f"{PV_PREFIX}:RMAT_COUNT", counter + 1)
+        counter = caget(f"{PV_PREFIX}:RMAT_CNT")
+        caput(f"{PV_PREFIX}:RMAT_CNT", counter + 1)
     except TypeError as e:
-        write_status(f"{b_path}:{p_type}:RMAT\t{e.args[0]}", 2)
+        write_status(e.args[0], 2)
 
     # Save TWISS data; TypeError thrown if data includes complex numbers
     try:
@@ -125,12 +125,12 @@ def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         pva.put(f"{PV_PREFIX}:TWISS", twiss_pv)
         caput(f"{PV_PREFIX}:TWISS_TOD", proc_time)
 
-        counter = caget(f"{PV_PREFIX}:TWISS_COUNT")
-        caput(f"{PV_PREFIX}:TWISS_COUNT", counter + 1)
+        counter = caget(f"{PV_PREFIX}:TWISS_CNT")
+        caput(f"{PV_PREFIX}:TWISS_CNT", counter + 1)
     except TypeError as e:
-        write_status(f"{b_path}:{p_type}:TWISS\t{e.args[0]}", 2)
+        write_status(e.args[0], 2)
 
-    write_status(f"{b_path}:{p_type}\tEnd")
+    write_status("End data processing")
 
 
 def get_element_dict(m_eng):
@@ -168,7 +168,7 @@ def main():
     global PV_PREFIX
     PV_PREFIX = f"BLEM:SYS0:1:{args.b_path}:{args.p_type}"
 
-    write_status("Starting-up")
+    write_status("Preparing script", 1)
 
     # Open a PVAccess connection with p4p
     pva = Context('pva', nt=False)
@@ -181,6 +181,7 @@ def main():
 
     # Populate associated PV continuously; at most once per second
     try:
+        write_status("Running script", 1)
         while True:
             start_time = time()
             periodic_pvs(pva, m_eng, element_devices_dict, args.b_path, args.p_type)
@@ -192,7 +193,7 @@ def main():
         logger.info("Closing connections")
     finally:
         pva.close()
-        write_status("Closing-down")
+        write_status("Ending script", 1)
 
 
 if __name__ == "__main__":
