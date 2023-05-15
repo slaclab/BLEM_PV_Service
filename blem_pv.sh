@@ -8,17 +8,6 @@ export PYTHONPATH=$TOOLS/python/toolbox
 export LD_LIBRARY_PATH=/usr/local/lcls/package/anaconda/envs/python3.7env/epics/lib/linux-x86_64:$LD_LIBRARY_PATH
 
 
-# Send a kill signal to each python process started by this script
-close(){
-    for pid in "${pids[@]}"; do
-        if ps -p $pid > /dev/null; then
-            kill $pid
-        fi
-    done
-}
-trap close SIGINT SIGTERM
-
-
 # Run each script in the background and store their process IDs
 b_paths=("CU_HXR" "CU_SXR" "SC_HXR" "SC_SXR" "SC_DIAG0" "SC_BSYD")
 p_types=("LIVE" "DESIGN")
@@ -29,5 +18,3 @@ for arg1 in "${b_paths[@]}"; do
         pids+=($!)
     done
 done
-
-wait
