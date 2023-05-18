@@ -169,6 +169,9 @@ def main():
     global PV_PREFIX
     PV_PREFIX = f"BLEM:SYS0:1:{args.b_path}:{args.p_type}"
 
+    if caget(f"{PV_PREFIX}:STAT") != "Ending script":
+        return
+
     write_status("Preparing script", 1)
 
     # Open a PVAccess connection with p4p
