@@ -76,7 +76,7 @@ def update_pv_value(pv, n, devices, z_pos, l_eff, r_mat=None, twiss=None):
             pv['value'][key] = twiss[ind]
 
 
-def periodic_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
+def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
     """Update the RMAT & TWISS PVs for the given Beam Path and Model
     Type. This is done by running the MATLAB function model_rMatGet()
     and saving the data in associated PVs.
@@ -157,11 +157,12 @@ def get_element_dict(m_eng):
 
 def main():
     """For the given Beam Path and Model Type, open a MATLAB engine and
-    repeatedly (<= 1Hz) populate the associated PV with model data.
+    the associated PV with model data.
     """
+    valid_paths = ["CU_HXR", "CU_SXR", "SC_HXR", "SC_SXR", "SC_DIAG0", "SC_BSYD"]
     # Parse arguments passed into the program
     parser = ArgumentParser(prog="BLEM PV Service")
-    parser.add_argument("b_path", metavar="Beam Path")
+    parser.add_argument("b_path", metavar="Beam Path", choices=valid_paths)
     parser.add_argument("p_type", choices=['LIVE', 'DESIGN'])
     args = parser.parse_args()
 
@@ -179,21 +180,11 @@ def main():
     # Populate a dictionary of {element name (str): device name (str)}
     element_devices_dict = get_element_dict(m_eng)
 
-    # Populate associated PV continuously; at most once per second
-    try:
-        write_status("Running script", 1)
-        while True:
-            start_time = time()
-            periodic_pvs(pva, m_eng, element_devices_dict, args.b_path, args.p_type)
-            elapsed_time = time() - start_time
+    # Populate associated PV
+    populate_pvs(pva, m_eng, element_devices_dict, args.b_path, args.p_type)
 
-            if elapsed_time < 1:
-                sleep(1 - elapsed_time)
-    except (KeyboardInterrupt, InterruptedError):
-        logger.info("Closing connections")
-    finally:
-        pva.close()
-        write_status("Ending script", 1)
+    write_status("Ending script", 1)
+    pva.close()
 
 
 if __name__ == "__main__":

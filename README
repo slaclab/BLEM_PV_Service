@@ -33,11 +33,11 @@ The BLEM PV Service populates and updates multiple PVs containing the BLEM R-Mat
   - Establish connection with PVA  
   - Create Matlab engine  
   - Create a dictionary of all element and device names  
-  - Run a loop until terminated that will:  
-    - Get the PV data from Matlab  
-    - Write the data to the associated RMAT & TWISS PVs with PVA  
-    - Write the timestamp to the associated RMAT_TOD & TWISS_TOD PVs with CA  
-    - Sleep for at most 1 second (skipped if the function takes >1s to process)  
+  - Get the PV data from Matlab  
+  - Write the data to the associated RMAT & TWISS PVs with PVA  
+  - Write the timestamp to the associated RMAT_TOD & TWISS_TOD PVs with CA  
+  - Write the processing count to the associated RMAT_CNT & TWISS_CNT PVs with CA  
+  - Write the status to the associated STAT PVs with CA  
 
 
 ### Authors
