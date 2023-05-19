@@ -14,6 +14,8 @@ p_types=("LIVE" "DESIGN")
 
 for arg1 in "${b_paths[@]}"; do
     for arg2 in "${p_types[@]}"; do
-        python blem_pv.py $arg1 $arg2 & 
+        if ! pgrep -f "python blem_pv.py $arg1 $arg2" > /dev/null; then
+            python blem_pv.py $arg1 $arg2 & 
+        fi
     done
 done
