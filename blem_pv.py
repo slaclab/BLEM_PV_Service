@@ -170,7 +170,7 @@ def main():
     PV_PREFIX = f"BLEM:SYS0:1:{args.b_path}:{args.p_type}"
 
     curr_stat = caget(f"{PV_PREFIX}:STAT")
-    if curr_stat != "Ending script" or curr_stat != "":
+    if curr_stat != "Ending script" and curr_stat != "":
         return
 
     write_status("Preparing script", 1)
