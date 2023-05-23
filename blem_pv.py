@@ -1,10 +1,10 @@
-from time import time, sleep
+from io import StringIO
 from logging import (getLogger, StreamHandler, Formatter)
 from argparse import ArgumentParser
 from datetime import datetime
 from epics import (caget, caput)
 from p4p.client.thread import Context
-from matlab.engine import (start_matlab, InterruptedError)
+from matlab.engine import start_matlab
 
 
 # Establish logging
@@ -17,13 +17,17 @@ logger.setLevel("WARNING")
 handler.setLevel("WARNING")
 
 
+# Capture MATLAB's stdout & stderr
+nullout = StringIO()
+
+
 # Ordered list of dict keys used by TWISS NTTable
 TWISS_KEYS = ['p0c', 'psi_x', 'beta_x', 'alpha_x', 'eta_x', 'etap_x',
               'psi_y', 'beta_y', 'alpha_y', 'eta_y', 'etap_y']
 PV_PREFIX = None
 
 
-def write_status(msg, level=0):
+def write_status(msg, err=False):
     """Write a message to stdout with the logger and write it to a
     status PV.
 
@@ -31,12 +35,10 @@ def write_status(msg, level=0):
         msg (str): The status message to write.
         level (int): Determines the logging level.
     """
-    if level < 2:
+    if not err:
         logger.info(msg)
-    elif level == 2:
+    else:
         logger.error(msg)
-
-    if level > 0:
         caput(f"{PV_PREFIX}:STAT", msg)
 
 
@@ -97,7 +99,9 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         b_path,
         [],
         [f'BEAMPATH={b_path}', f'TYPE={get_type}'],
-        nargout=6
+        nargout=6,
+        stdout=nullout,
+        stderr=nullout
     )
 
     devices = [element_devices_dict.get(ele, ele) for ele in n]
@@ -114,7 +118,7 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         counter = caget(f"{PV_PREFIX}:RMAT_CNT")
         caput(f"{PV_PREFIX}:RMAT_CNT", counter + 1)
     except TypeError as e:
-        write_status(e.args[0], 2)
+        write_status(e.args[0], err=True)
 
     # Save TWISS data; TypeError thrown if data includes complex numbers
     try:
@@ -128,7 +132,7 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         counter = caget(f"{PV_PREFIX}:TWISS_CNT")
         caput(f"{PV_PREFIX}:TWISS_CNT", counter + 1)
     except TypeError as e:
-        write_status(e.args[0], 2)
+        write_status(e.args[0], err=True)
 
     write_status("End data processing")
 
@@ -139,14 +143,14 @@ def get_element_dict(m_eng):
     """
     # Get list of all element names (ignore non-str & duplicates)
     element_set = set()
-    for e in m_eng.model_nameConvert('*', 'MAD'):
+    for e in m_eng.model_nameConvert('*', 'MAD', stdout=nullout, stderr=nullout):
         if type(e) is str:
             element_set.add(e)
     elements = list(element_set)
 
     # Get a device name for each element name (non-str -> '')
     devices = []
-    for d in m_eng.model_nameConvert(elements):
+    for d in m_eng.model_nameConvert(elements, stdout=nullout, stderr=nullout):
         if type(d) is str:
             devices.append(d)
         else:
@@ -169,7 +173,7 @@ def main():
     global PV_PREFIX
     PV_PREFIX = f"BLEM:SYS0:1:{args.b_path}:{args.p_type}"
 
-    write_status("Preparing script", 1)
+    write_status("Running script")
 
     # Open a PVAccess connection with p4p
     pva = Context('pva', nt=False)
@@ -183,8 +187,9 @@ def main():
     # Populate associated PV
     populate_pvs(pva, m_eng, element_devices_dict, args.b_path, args.p_type)
 
-    write_status("Ending script", 1)
+    write_status("Ending script")
     pva.close()
+    m_eng.quit()
 
 
 if __name__ == "__main__":
