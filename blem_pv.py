@@ -38,7 +38,7 @@ def write_status(msg, err=False):
     if not err:
         logger.info(msg)
     else:
-        logger.error(msg)
+        # logger.error(msg)
         caput(f"{PV_PREFIX}:STAT", msg)
 
 
