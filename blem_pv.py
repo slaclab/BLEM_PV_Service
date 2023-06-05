@@ -40,6 +40,9 @@ def write_status(msg, err=False):
     else:
         # logger.error(msg)
         proc_time = datetime.now().isoformat(sep=' ', timespec="seconds")
+        msg = f"[{proc_time}] [ERROR] - {msg}"
+        if len(msg) > 40:
+            msg = msg[:47] + "..."
         caput(f"{PV_PREFIX}:STAT", f"[{proc_time}] [ERROR] - {msg}")
 
 
@@ -118,8 +121,8 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
 
         counter = caget(f"{PV_PREFIX}:RMAT_CNT")
         caput(f"{PV_PREFIX}:RMAT_CNT", counter + 1)
-    except TypeError as e:
-        write_status(e.args[0], err=True)
+    except TypeError:
+        write_status("RMAT TypeError", err=True)
 
     # Save TWISS data; TypeError thrown if data includes complex numbers
     try:
@@ -132,8 +135,8 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
 
         counter = caget(f"{PV_PREFIX}:TWISS_CNT")
         caput(f"{PV_PREFIX}:TWISS_CNT", counter + 1)
-    except TypeError as e:
-        write_status(e.args[0], err=True)
+    except TypeError:
+        write_status("TWISS TypeError", err=True)
 
     write_status("End data processing")
 
