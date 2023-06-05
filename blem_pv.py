@@ -39,7 +39,8 @@ def write_status(msg, err=False):
         logger.info(msg)
     else:
         # logger.error(msg)
-        caput(f"{PV_PREFIX}:STAT", f"[ERROR] - {msg}")
+        proc_time = datetime.now().isoformat(sep=' ', timespec="seconds")
+        caput(f"{PV_PREFIX}:STAT", f"[{proc_time}] [ERROR] - {msg}")
 
 
 def update_pv_value(pv, n, devices, z_pos, l_eff, r_mat=None, twiss=None):
