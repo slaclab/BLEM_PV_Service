@@ -39,7 +39,7 @@ def write_status(msg, err=False):
         logger.info(msg)
     else:
         # logger.error(msg)
-        err_msg = f"[ERROR] - {err_msg}"
+        err_msg = f"[ERROR] - {msg}"
         if len(err_msg) > 40:
             err_msg = err_msg[:36] + "..."
         caput(f"{PV_PREFIX}:STAT", err_msg)
