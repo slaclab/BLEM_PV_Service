@@ -12,10 +12,27 @@ export LD_LIBRARY_PATH=/usr/local/lcls/package/anaconda/envs/python3.7env/epics/
 b_paths=("CU_HXR" "CU_SXR" "SC_HXR" "SC_SXR" "SC_DIAG0" "SC_BSYD")
 p_types=("LIVE" "DESIGN")
 
+# Start the python script for every path & type combination if it is not running or stuck on exit
 for arg1 in "${b_paths[@]}"; do
     for arg2 in "${p_types[@]}"; do
-        if ! pgrep -f "python blem_pv.py $arg1 $arg2" > /dev/null; then
-            python blem_pv.py $arg1 $arg2 & 
+
+        # Check if the python script is running for the given path & type
+        if pgrep_out=$(pgrep -f "python blem_pv.py $arg1 $arg2"); then
+
+            # Check :STAT PV and continue to the next process if it is running correctly
+            status_pv="BLEM:SYS0:1:$arg1:$arg2:STAT"
+            status=$(caget -t $status_pv)
+            if ! [[ "$status" = "[INFO] - Ending script" ]]; then
+                continue
+            fi
+
+            kill $pgrep_out
+
+            error_pv="BLEM:SYS0:1:$arg1:$arg2:ERR_CNT"
+            err_cnt=$(caget -t $error_pv)
+            caput $error_pv $(($err_cnt + 1)) > /dev/null
         fi
+
+        python blem_pv.py $arg1 $arg2 &
     done
 done

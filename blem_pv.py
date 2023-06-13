@@ -6,6 +6,8 @@ from epics import (caget, caput)
 from p4p.client.thread import Context
 from matlab.engine import start_matlab
 
+from time import sleep
+
 
 # Establish logging
 logger = getLogger()
@@ -33,16 +35,16 @@ def write_status(msg, err=False):
 
     Args:
         msg (str): The status message to write.
-        level (int): Determines the logging level.
+        err (bool): Determines the logging level.
     """
     if not err:
-        logger.info(msg)
+        status_msg = f"[INFO] - {msg}"
     else:
-        # logger.error(msg)
-        err_msg = f"[ERROR] - {msg}"
-        if len(err_msg) > 40:
-            err_msg = err_msg[:36] + "..."
-        caput(f"{PV_PREFIX}:STAT", err_msg)
+        status_msg = f"[ERROR] - {msg}"
+
+    if len(status_msg) > 40:
+        status_msg = status_msg[:36] + "..."
+    caput(f"{PV_PREFIX}:STAT", status_msg)
 
 
 def update_pv_value(pv, n, devices, z_pos, l_eff, r_mat=None, twiss=None):
@@ -120,7 +122,7 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
 
         counter = caget(f"{PV_PREFIX}:RMAT_CNT")
         caput(f"{PV_PREFIX}:RMAT_CNT", counter + 1)
-    except TypeError as e:
+    except (TypeError, TimeoutError) as e:
         write_status(f"RMAT {e.args[0]}", err=True)
 
     # Save TWISS data; TypeError thrown if data includes complex numbers
@@ -134,7 +136,7 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
 
         counter = caget(f"{PV_PREFIX}:TWISS_CNT")
         caput(f"{PV_PREFIX}:TWISS_CNT", counter + 1)
-    except TypeError as e:
+    except (TypeError, TimeoutError) as e:
         write_status(f"TWISS {e.args[0]}", err=True)
 
     write_status("End data processing")
@@ -191,6 +193,7 @@ def main():
     populate_pvs(pva, m_eng, element_devices_dict, args.b_path, args.p_type)
 
     write_status("Ending script")
+    sleep(10)
     pva.close()
     m_eng.quit()
 
