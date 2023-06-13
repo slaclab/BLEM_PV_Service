@@ -1,3 +1,6 @@
+R1.1.1  Zach Domke  06/13/2023
+        Startup script closes the existing python script if it is trying to close
+        Startup script records how often it closes python scripts that were hanging
 R1.1.0  Zach Domke  05/18/2023
         Moving away from running periodically
         blem_pv.sh should be called on a timer
