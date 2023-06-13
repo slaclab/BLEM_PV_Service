@@ -6,8 +6,6 @@ from epics import (caget, caput)
 from p4p.client.thread import Context
 from matlab.engine import start_matlab
 
-from time import sleep
-
 
 # Establish logging
 logger = getLogger()
@@ -193,7 +191,6 @@ def main():
     populate_pvs(pva, m_eng, element_devices_dict, args.b_path, args.p_type)
 
     write_status("Ending script")
-    sleep(10)
     pva.close()
     m_eng.quit()
 
