@@ -94,8 +94,6 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         b_path (str): The Beam Path of the requested data.
         p_type (str): The Model Type of the requested data.
     """
-    write_status("Start data processing")
-
     # Run the MATLAB function model_rMatGet() (the energy variable is unused)
     get_type = "EXTANT" if p_type == "LIVE" else "DESIGN"
     r_mat, z_pos, l_eff, twiss, _, n = m_eng.model_rMatGet(
@@ -136,8 +134,6 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         caput(f"{PV_PREFIX}:TWISS_CNT", counter + 1)
     except (TypeError, TimeoutError) as e:
         write_status(f"TWISS {e.args[0]}", err=True)
-
-    write_status("End data processing")
 
 
 def get_element_dict(m_eng):
