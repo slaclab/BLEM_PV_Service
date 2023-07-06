@@ -8,13 +8,15 @@ The BLEM PV Service populates and updates multiple PVs containing the BLEM R-Mat
 |-- README  
 |-- RELEASE_NOTES  
 |-- blem_pv.sh  
-`-- blem_pv.py  
+|-- blem_pv.py  
+|-- blem_display.ui  
+`-- blem_display.py  
 
 
 ### blem_pv.sh  
   - Sources the correct version of python  
     - The Matlab Engine for 2020a can only be run from Python3.7  
-  - Runs a python script for each PV to update periodically  
+  - Periodically runs a python script for each PV to update the data  
   - There is a separate PV/python instance for each beampath and model type  
   - Beam Paths:  
     - CU_HXR  
@@ -38,6 +40,15 @@ The BLEM PV Service populates and updates multiple PVs containing the BLEM R-Mat
   - Write the timestamp to the associated RMAT_TOD & TWISS_TOD PVs with CA  
   - Write the processing count to the associated RMAT_CNT & TWISS_CNT PVs with CA  
   - Write the status to the associated STAT PVs with CA  
+
+
+### blem_display.py & blem_display.ui  
+  - Allows the user to pick any PV to display info on  
+  - Displays info on the process itself:  
+    - When it was last updated and how many times it has updated  
+    - The process's current status  
+    - The process's error count  
+  - Displays a table showing the Matlab Model data contained within the BLEM PVs  
 
 
 ### Authors
