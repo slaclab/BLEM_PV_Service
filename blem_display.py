@@ -10,7 +10,7 @@ class BLEMDisplay(Display):
 
         nt_tbl = self.ui.model_pv_tbl._table
         hdr = nt_tbl.horizontalHeader()
-        hdr.setResizeMode(QHeaderView.ResizeToContents)
+        hdr.setSectionResizeMode(QHeaderView.ResizeToContents)
 
         self.ui.path_cmbx.currentIndexChanged.connect(self.set_channels)
         self.ui.type_cmbx.currentIndexChanged.connect(self.set_channels)
