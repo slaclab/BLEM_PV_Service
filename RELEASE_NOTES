@@ -1,3 +1,7 @@
+R1.3.0  Zach Domke  08/02/2023
+        Prepare bash script to be run as Cron Job:
+            Source default environment
+            Email zdomke@slac.stanford.edu when process hangs on exit
 R1.2.0  Zach Domke  07/06/2023
         Adding Matlab Model display screen
 R1.1.1  Zach Domke  06/13/2023
