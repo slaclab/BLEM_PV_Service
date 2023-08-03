@@ -38,7 +38,7 @@ def write_status(msg, err=False):
     if not err:
         status_msg = f"[INFO] - {msg}"
     else:
-        logger.error(status_msg)
+        logger.error(msg)
         status_msg = f"[ERROR] - {msg}"
 
     if len(status_msg) > 40:
