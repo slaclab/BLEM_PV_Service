@@ -52,7 +52,7 @@ for arg1 in "${b_paths[@]}"; do
 
             error_pv="BLEM:SYS0:1:$arg1:$arg2:ERR_CNT"
             err_cnt=$(caget -t $error_pv)
-            caput $error_pv $(($err_cnt + 1))
+            caput -l $error_pv $(($err_cnt + 1))
 
             error_message $arg1 $arg2 $pgrep_out
             printf %b "$msg" | mailx -s "Cron Job Error - Duplicate BLEM PV Process" zdomke@slac.stanford.edu
