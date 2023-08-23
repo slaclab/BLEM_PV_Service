@@ -2,7 +2,7 @@ from io import StringIO
 from logging import (getLogger, StreamHandler, Formatter)
 from argparse import ArgumentParser
 from datetime import datetime
-from epics import (caget, caput)
+from epics import (caput, PV)
 from p4p.client.thread import Context
 from matlab.engine import start_matlab
 
@@ -24,6 +24,13 @@ nullout = StringIO()
 # Ordered list of dict keys used by TWISS NTTable
 TWISS_KEYS = ['p0c', 'psi_x', 'beta_x', 'alpha_x', 'eta_x', 'etap_x',
               'psi_y', 'beta_y', 'alpha_y', 'eta_y', 'etap_y']
+# Rate PV for each destination
+RATE_PV_MAP = {'CU_HXR': "IOC:BSY0:MP01:BYKIK_RATE",
+               'CU_SXR': "IOC:BSY0:MP01:BYKIKS_RATE",
+               'SC_DIAG0': "TPG:SYS0:1:DST01:RATE",
+               'SC_BSYD': "TPG:SYS0:1:DST02:RATE",
+               'SC_HXR': "TPG:SYS0:1:DST03:RATE",
+               'SC_SXR': "TPG:SYS0:1:DST04:RATE"}
 PV_PREFIX = None
 
 
@@ -44,6 +51,25 @@ def write_status(msg, err=False):
     if len(status_msg) > 40:
         status_msg = status_msg[:36] + "..."
     caput(f"{PV_PREFIX}:STAT", status_msg)
+
+
+def running_beam(b_path):
+    """A quick preliminary check to determine if beam is running to the
+    requested area."""
+    rate_pv = PV(RATE_PV_MAP[b_path], verbose=False)
+    if not rate_pv.connected:
+        return False
+    value = rate_pv.value
+
+    if b_path[:2] == "CU":
+        try:
+            state_str = rate_pv.enum_strs[value]
+            value = int(state_str.split()[0])
+        except (ValueError, IndexError, AttributeError):
+            # This except accounts for an invalid string or type
+            return False
+
+    return value > 0
 
 
 def update_pv_value(pv, n, devices, z_pos, l_eff, r_mat=None, twiss=None):
@@ -117,10 +143,10 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         pva.put(f"{PV_PREFIX}:RMAT", r_mat_pv)
         caput(f"{PV_PREFIX}:RMAT_TOD", proc_time)
 
-        counter = caget(f"{PV_PREFIX}:RMAT_CNT")
-        caput(f"{PV_PREFIX}:RMAT_CNT", counter + 1)
+        counter = PV(f"{PV_PREFIX}:RMAT_CNT", verbose=False)
+        counter.value += 1
     except (TypeError, TimeoutError) as e:
-        write_status(f"RMAT {str(e)}", err=True)
+        write_status(f"RMAT- {str(e)}", err=True)
 
     # Save TWISS data; TypeError thrown if data includes complex numbers
     try:
@@ -131,10 +157,10 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         pva.put(f"{PV_PREFIX}:TWISS", twiss_pv)
         caput(f"{PV_PREFIX}:TWISS_TOD", proc_time)
 
-        counter = caget(f"{PV_PREFIX}:TWISS_CNT")
-        caput(f"{PV_PREFIX}:TWISS_CNT", counter + 1)
+        counter = PV(f"{PV_PREFIX}:TWISS_CNT", verbose=False)
+        counter.value += 1
     except (TypeError, TimeoutError) as e:
-        write_status(f"TWISS {str(e)}", err=True)
+        write_status(f"TWISS- {str(e)}", err=True)
 
 
 def get_element_dict(m_eng):
@@ -169,6 +195,9 @@ def main():
     parser.add_argument("b_path", metavar="Beam Path", choices=valid_paths)
     parser.add_argument("p_type", choices=['LIVE', 'DESIGN'])
     args = parser.parse_args()
+
+    if not running_beam(args.b_path):
+        return
 
     global PV_PREFIX
     PV_PREFIX = f"BLEM:SYS0:1:{args.b_path}:{args.p_type}"
