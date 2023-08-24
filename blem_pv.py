@@ -57,7 +57,7 @@ def running_beam(b_path):
     """A quick preliminary check to determine if beam is running to the
     requested area."""
     rate_pv = PV(RATE_PV_MAP[b_path], verbose=False)
-    if not rate_pv.connected:
+    if not rate_pv.wait_for_connection():
         return False
     value = rate_pv.value
 
