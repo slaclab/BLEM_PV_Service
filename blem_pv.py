@@ -146,7 +146,7 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         counter = PV(f"{PV_PREFIX}:RMAT_CNT", verbose=False)
         counter.value += 1
     except (TypeError, TimeoutError) as e:
-        write_status(f"RMAT- {str(e)}", err=True)
+        write_status(f"RMAT {str(e)}", err=True)
 
     # Save TWISS data; TypeError thrown if data includes complex numbers
     try:
@@ -160,7 +160,7 @@ def populate_pvs(pva, m_eng, element_devices_dict, b_path, p_type):
         counter = PV(f"{PV_PREFIX}:TWISS_CNT", verbose=False)
         counter.value += 1
     except (TypeError, TimeoutError) as e:
-        write_status(f"TWISS- {str(e)}", err=True)
+        write_status(f"TWISS {str(e)}", err=True)
 
 
 def get_element_dict(m_eng):
