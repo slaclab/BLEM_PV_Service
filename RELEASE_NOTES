@@ -1,3 +1,7 @@
+R1.4.0  Zach Domke  12/13/2023
+        Move matlab_model_pvs.py into this project
+        Create startup script for matlab_model_pvs.py
+        Preliminary check that the PVs are being hosted for a watcher
 R1.3.1  Zach Domke  08/23/2023
         Preliminary check if beampath is in use
 R1.3.0  Zach Domke  08/02/2023

@@ -9,6 +9,8 @@ The BLEM PV Service populates and updates multiple PVs containing the BLEM R-Mat
 |-- RELEASE_NOTES  
 |-- blem_pv.sh  
 |-- blem_pv.py  
+|-- matlab_model_pvs.sh  
+|-- matlab_model_pvs.py  
 |-- blem_display.ui  
 `-- blem_display.py  
 
@@ -40,6 +42,16 @@ The BLEM PV Service populates and updates multiple PVs containing the BLEM R-Mat
   - Write the timestamp to the associated RMAT_TOD & TWISS_TOD PVs with CA  
   - Write the processing count to the associated RMAT_CNT & TWISS_CNT PVs with CA  
   - Write the status to the associated STAT PVs with CA  
+
+
+### matlab_model_pvs.sh  
+  - Sources the correct Python environment  
+  - Runs the matlab_model_pvs.py python code  
+
+
+### matlab_model_pvs.py  
+  - Uses the PVAccess For Python (p4p) library to host NTTable PVs used by the project  
+  - Runs indefinitely  
 
 
 ### blem_display.py & blem_display.ui  

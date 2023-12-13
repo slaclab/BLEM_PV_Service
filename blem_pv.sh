@@ -13,9 +13,13 @@ export LD_LIBRARY_PATH=/usr/local/lcls/package/anaconda/envs/python3.7env/epics/
 # Change Directory to the directory that contains the necessary python file
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-# Run each script in the background and store their process IDs
-b_paths=("CU_HXR" "CU_SXR" "SC_HXR" "SC_SXR" "SC_DIAG0" "SC_BSYD")
-p_types=("LIVE" "DESIGN")
+check_server_status(){
+    if pvget BLEM:SYS0:1:CU_HXR:LIVE:RMAT > /dev/null 2>&1; then
+        caput SIOC:SYS0:ML00:CALC500.PROC 1
+    else
+        exit 1
+    fi
+}
 
 error_message(){
     msg="This is an automated email notification from the cron job monitoring the "
@@ -33,6 +37,12 @@ error_message(){
     msg+="Please investigate and resolve the duplicate process to prevent conflicts "
     msg+="and ensure the smooth execution of subsequent runs.\n"
 }
+
+check_server_status
+
+# Run each script in the background and store their process IDs
+b_paths=("CU_HXR" "CU_SXR" "SC_HXR" "SC_SXR" "SC_DIAG0" "SC_BSYD")
+p_types=("LIVE" "DESIGN")
 
 # Start the python script for every path & type combination if it is not running or stuck on exit
 for arg1 in "${b_paths[@]}"; do
@@ -61,3 +71,5 @@ for arg1 in "${b_paths[@]}"; do
         python blem_pv.py $arg1 $arg2 &
     done
 done
+
+exit 0
