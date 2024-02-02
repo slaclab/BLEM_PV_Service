@@ -52,7 +52,7 @@ initial_rmat_table = rmat_table_type.wrap(rmat_table_rows, timestamp=time.time()
 class Handler(object):
     def put(self, pv, operation):
         try:
-            pv.post(operation.value(), timeStamp=time.time()) # just store the value and update subscribers
+            pv.post(operation.value(), timestamp=time.time()) # just store the value and update subscribers
             operation.done()
         except Exception as e:
             operation.done(error=str(e))
