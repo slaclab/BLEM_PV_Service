@@ -15,8 +15,10 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 
 check_server_status(){
     if pvget BLEM:SYS0:1:CU_HXR:LIVE:RMAT > /dev/null 2>&1; then
-        caput SIOC:SYS0:ML00:CALC500.PROC 1
+        caput SIOC:SYS0:ML00:CALC500.PROC 1 > /dev/null 2>&1
     else
+        echo "MATLAB Model PV Host is down" 1>&2
+        echo "Check host status on WATCHERS page" 1>&2
         exit 1
     fi
 }
