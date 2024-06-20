@@ -20,6 +20,8 @@ rmat_table_type = NTTable(
             ("r51", "d"), ("r52", "d"), ("r53", "d"), ("r54", "d"), ("r55", "d"), ("r56", "d"),
             ("r61", "d"), ("r62", "d"), ("r63", "d"), ("r64", "d"), ("r65", "d"), ("r66", "d")])
 
+mdbo_table_type = NTTable([("NAME", "s"), ("X", "d"), ("Y", "d"), ("TMIT", "d")])
+
 # NOTE: p4p requires you to specify some initial value for every PV - there's not a default.
 # here is where we make those default values.  This is a particularly hokey example.
 twiss_table_rows = []
@@ -42,9 +44,13 @@ for i in range(0,len(element_name_list)):
         "r51": rmat[4,0], "r52": rmat[4,1], "r53": rmat[4,2], "r54": rmat[4,3], "r55": rmat[4,4], "r56": rmat[4,5],
         "r61": rmat[5,0], "r62": rmat[5,1], "r63": rmat[5,2], "r64": rmat[5,3], "r65": rmat[5,4], "r66": rmat[5,5]})
 
+mdbo_table_rows = []
+mdbo_table_rows.append({"NAME": "RFBPM1", "X": 1.0, "Y": 1.1, "TMIT": 1.2})
+
 # Take the raw data and "wrap" it into the form that the PVA server needs.
 initial_twiss_table = twiss_table_type.wrap(twiss_table_rows, timestamp=time.time())
 initial_rmat_table = rmat_table_type.wrap(rmat_table_rows, timestamp=time.time())
+initial_mdbo_table = mdbo_table_type.wrap(mdbo_table_rows, timestamp=time.time())
 
 # Define a "handler" that gets called when somebody puts a value into a PV.
 # In our case, this is sort of silly, because we just blindly dump whatever
@@ -94,6 +100,15 @@ SC_BSYD_design_twiss_pv = SharedPV(nt=twiss_table_type, initial=initial_twiss_ta
 SC_BSYD_live_rmat_pv = SharedPV(nt=rmat_table_type, initial=initial_rmat_table, handler=Handler())
 SC_BSYD_design_rmat_pv = SharedPV(nt=rmat_table_type, initial=initial_rmat_table, handler=Handler())
 
+HXR_mbdo_1_pv = SharedPV(nt=mdbo_table_type, initial=initial_mdbo_table, handler=Handler())
+HXR_mbdo_2_pv = SharedPV(nt=mdbo_table_type, initial=initial_mdbo_table, handler=Handler())
+HXR_mbdo_3_pv = SharedPV(nt=mdbo_table_type, initial=initial_mdbo_table, handler=Handler())
+HXR_mbdo_4_pv = SharedPV(nt=mdbo_table_type, initial=initial_mdbo_table, handler=Handler())
+SXR_mbdo_1_pv = SharedPV(nt=mdbo_table_type, initial=initial_mdbo_table, handler=Handler())
+SXR_mbdo_2_pv = SharedPV(nt=mdbo_table_type, initial=initial_mdbo_table, handler=Handler())
+SXR_mbdo_3_pv = SharedPV(nt=mdbo_table_type, initial=initial_mdbo_table, handler=Handler())
+SXR_mbdo_4_pv = SharedPV(nt=mdbo_table_type, initial=initial_mdbo_table, handler=Handler())
+
 # Make the PVA Server.  This is where we define the names for each of the PVs we defined above.
 # By using "PVAServer.forever", the server immediately starts running, and doesn't stop until you
 # kill it.
@@ -120,4 +135,13 @@ pva_server = PVAServer.forever(providers=[{f"BLEM:SYS0:1:CU_HXR:LIVE:TWISS": CU_
 					   f"BLEM:SYS0:1:SC_BSYD:LIVE:TWISS": SC_BSYD_live_twiss_pv,
 					   f"BLEM:SYS0:1:SC_BSYD:DESIGN:TWISS": SC_BSYD_design_twiss_pv,
 					   f"BLEM:SYS0:1:SC_BSYD:LIVE:RMAT": SC_BSYD_live_rmat_pv,
-					   f"BLEM:SYS0:1:SC_BSYD:DESIGN:RMAT": SC_BSYD_design_rmat_pv}])
+					   f"BLEM:SYS0:1:SC_BSYD:DESIGN:RMAT": SC_BSYD_design_rmat_pv,
+					   f"PHYS:SYS0:1:HXRMBDO": HXR_mbdo_1_pv,
+					   f"PHYS:SYS0:2:HXRMBDO": HXR_mbdo_2_pv,
+					   f"PHYS:SYS0:3:HXRMBDO": HXR_mbdo_3_pv,
+					   f"PHYS:SYS0:4:HXRMBDO": HXR_mbdo_4_pv,
+					   f"PHYS:SYS0:1:SXRMBDO": SXR_mbdo_1_pv,
+					   f"PHYS:SYS0:2:SXRMBDO": SXR_mbdo_2_pv,
+					   f"PHYS:SYS0:3:SXRMBDO": SXR_mbdo_3_pv,
+					   f"PHYS:SYS0:4:SXRMBDO": SXR_mbdo_4_pv,
+                       }])
