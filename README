@@ -1,9 +1,9 @@
-# BLEM PV Service
+# BLEM PV Service  
 
 The BLEM PV Service populates and updates multiple PVs containing the BLEM R-Matrix and Twiss models. This service is run for multiple beampaths and types of models.  
 
 
-## Directory Structure
+## Directory Structure  
 .  
 |-- README  
 |-- RELEASE_NOTES  
@@ -14,6 +14,28 @@ The BLEM PV Service populates and updates multiple PVs containing the BLEM R-Mat
 |-- blem_display.ui  
 `-- blem_display.py  
 
+
+## Deployment  
+### Prod  
+The MATLAB Model PV Host can be controled from the Watchers page:  
+  lclshome --> Physics Apps --> GOTO Watcher... --> Group 1 --> MATLAB Model PV Host  
+
+### Dev  
+To launch the MATLAB Model PVs on Dev, log onto dev as laci:  
+  [laci@lcls-dev3 ~]$ ssh laci@lcls-dev3  
+Determine if there is an existing tmux, it should be called matlab_model_pvs:  
+  [laci@lcls-dev3 ~]$ tmux ls  
+  failed to connect to server  
+Connect to the existing session or create a new one:  
+  [laci@lcls-dev3 ~]$ tmux new -s matlab_model_pvs  
+Open $TOOLS/script/BLEM_PV_Service and launch matlab_model_pvs.sh  
+  [laci@lcls-dev3 ~]$ cd $TOOLS/script/BLEM_PV_Service  
+  [laci@lcls-dev3 BLEM_PV_Service]$ ./matlab_model_pvs.sh  
+  2024-06-20T14:37:34.393856617 WARN pvxs.tcp.setup Server unable to bind port 5075, falling back to [::]:34837  
+Detach from the session:
+  <Ctrl-B + D>  
+  [detached]  
+  [laci@lcls-dev3 ~]$  
 
 ### blem_pv.sh  
   - Sources the correct version of python  
